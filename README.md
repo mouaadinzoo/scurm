@@ -21,6 +21,15 @@ Le projet est implemente en Python 3 :
 - execution simple en ligne de commande sous GNU/Linux
 - aucune dependance externe necessaire pour parser les fichiers texte convertis
 
+## Choix du langage
+
+L'equipe a compare Python 3 avec le langage C en utilisant la commande `time` sur deux types de mesures :
+
+- des boucles imbriquees allant de `0` a `10000`
+- l'ecriture puis la lecture de gros fichiers contenant des donnees aleatoires
+
+Python 3 a ete retenu pour la version finale, car il est maitrise par l'equipe et ses performances ont ete jugees satisfaisantes pour le parseur demande dans ce sprint.
+
 ## Structure
 
 - `parse_articles.py` : script principal
@@ -66,6 +75,12 @@ Le benchmark mesure :
 
 - une boucle imbriquee
 - une ecriture/lecture de fichier binaire
+
+Exemple d'utilisation avec `time` :
+
+```bash
+time python3 benchmark.py
+```
 
 ## Limites
 
