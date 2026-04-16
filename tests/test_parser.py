@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import tempfile
 import unittest
+from pathlib import Path
 
-from parse_articles import parse_article_text
+from parse_articles import parse_article_text, process_directory
 
 
 class ParseArticleTextTests(unittest.TestCase):
@@ -75,6 +77,34 @@ class ParseArticleTextTests(unittest.TestCase):
         self.assertEqual(parsed.title, "Minimal Example")
         self.assertEqual(parsed.authors, "")
         self.assertEqual(parsed.abstract, "")
+
+    def test_process_directory_reads_txt_inputs(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            input_dir = Path(tmpdir)
+            source = input_dir / "paper.txt"
+            source.write_text(
+                "\n".join(
+                    [
+                        "A Practical Parser for Scientific Articles",
+                        "John Doe, Jane Smith",
+                        "Abstract",
+                        "This paper presents a parser for scientific articles.",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+
+            processed_count, output_dir = process_directory(input_dir, "parsed_output")
+
+            self.assertEqual(processed_count, 1)
+            output_lines = (output_dir / "paper.txt").read_text(encoding="utf-8").splitlines()
+            self.assertEqual(output_lines[0], "paper.pdf")
+            self.assertEqual(output_lines[1], "A Practical Parser for Scientific Articles")
+            self.assertEqual(output_lines[2], "John Doe, Jane Smith")
+            self.assertEqual(
+                output_lines[3],
+                "This paper presents a parser for scientific articles.",
+            )
 
 
 if __name__ == "__main__":

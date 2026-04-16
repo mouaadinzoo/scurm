@@ -6,8 +6,6 @@ import shutil
 from dataclasses import dataclass
 from pathlib import Path
 
-from pypdf import PdfReader
-
 
 NOISE_PREFIXES = (
     "doi",
@@ -231,12 +229,12 @@ def parse_article_text(text: str, source_filename: str) -> ParsedArticle:
     )
 
 
-def extract_pdf_text(pdf_path: Path) -> str:
-    reader = PdfReader(str(pdf_path))
-    pages = []
-    for page in reader.pages:
-        pages.append(page.extract_text() or "")
-    return "\n".join(pages)
+def read_text_file(text_path: Path) -> str:
+    return text_path.read_text(encoding="utf-8-sig", errors="ignore")
+
+
+def source_pdf_name_from_text_file(text_path: Path) -> str:
+    return f"{text_path.stem}.pdf"
 
 
 def write_output(article: ParsedArticle, output_path: Path) -> None:
@@ -258,31 +256,31 @@ def recreate_output_dir(output_dir: Path) -> None:
 
 
 def process_directory(input_dir: Path, output_subdir: str) -> tuple[int, Path]:
-    pdf_files = sorted(input_dir.glob("*.pdf"))
-    if not pdf_files:
-        raise FileNotFoundError(f"No PDF files found in '{input_dir}'.")
+    text_files = sorted(path for path in input_dir.glob("*.txt") if path.is_file())
+    if not text_files:
+        raise FileNotFoundError(f"No TXT files found in '{input_dir}'.")
 
     output_dir = input_dir / output_subdir
     recreate_output_dir(output_dir)
 
-    for pdf_path in pdf_files:
+    for text_path in text_files:
         article = parse_article_text(
-            extract_pdf_text(pdf_path),
-            source_filename=pdf_path.name,
+            read_text_file(text_path),
+            source_filename=source_pdf_name_from_text_file(text_path),
         )
-        write_output(article, output_dir / f"{pdf_path.stem}.txt")
+        write_output(article, output_dir / text_path.name)
 
-    return len(pdf_files), output_dir
+    return len(text_files), output_dir
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Parse scientific PDF files into plain-text summaries."
+        description="Parse converted scientific TXT files into plain-text summaries."
     )
     parser.add_argument(
         "input_dir",
         type=Path,
-        help="Directory containing PDF files.",
+        help="Directory containing TXT files produced by a PDF-to-text converter.",
     )
     parser.add_argument(
         "--output-subdir",
@@ -301,7 +299,7 @@ def main() -> int:
         parser.error(f"'{input_dir}' is not a directory.")
 
     processed_count, output_dir = process_directory(input_dir, args.output_subdir)
-    print(f"Processed {processed_count} PDF file(s).")
+    print(f"Processed {processed_count} TXT file(s).")
     print(f"Output directory: {output_dir}")
     return 0
 
